@@ -1,4 +1,5 @@
 using Domain.interfaces;
+using Application.DTOs;
 using Application.interfaces;
 using Application.Responses;
 using Domain.Models;
@@ -9,9 +10,16 @@ namespace Application.Services;
 public class DoctorService(IDoctorRepository doctorRepository) : IDoctorService
 {
     private IDoctorRepository _repository = doctorRepository;
-    public async Task<ApiResponse<bool>> AddDoctor(Doctor doctor)
+    public async Task<ApiResponse<bool>> AddDoctor(DoctorDto doctor)
     {
-        var res = await _repository.AddDoctor(doctor);
+        var model = new Doctor
+        {
+            Fullname = doctor.Fullname,
+            Specialty = doctor.Specialty,
+            IsActive = doctor.IsActive,
+            Hiredat = doctor.Hiredat
+        };
+        var res = await _repository.AddDoctor(model);
         return res
         ? new ApiResponse<bool>(HttpStatusCode.OK , "Added!" , true)
         : new ApiResponse<bool>(HttpStatusCode.InternalServerError , "Not Added(" , false);
@@ -25,23 +33,43 @@ public class DoctorService(IDoctorRepository doctorRepository) : IDoctorService
         : new ApiResponse<bool>(HttpStatusCode.InternalServerError , "Not deleted(" , false);
     }
 
-    public async Task<ApiResponse<List<Doctor>>> GetAllDoctors()
+    public async Task<ApiResponse<List<DoctorDto>>> GetAllDoctors()
     {
         var res = await _repository.GetAllDoctors();
-        return new ApiResponse<List<Doctor>>(HttpStatusCode.OK , "List of doctors" , res);
+        var doctors = res.Select(x => new DoctorDto
+        {
+            Fullname = x.Fullname,
+            Specialty = x.Specialty,
+            IsActive = x.IsActive,
+            Hiredat = x.Hiredat
+        }).ToList();
+        return new ApiResponse<List<DoctorDto>>(HttpStatusCode.OK , "List of doctors" , doctors);
     }
 
-    public async Task<ApiResponse<Doctor>> GetDoctor(int id)
+    public async Task<ApiResponse<DoctorDto>> GetDoctor(int id)
     {
         var res = await _repository.GetDoctor(id);
         return res != null
-        ? new ApiResponse<Doctor>(HttpStatusCode.OK , "Doctor found" , res)
-        : new ApiResponse<Doctor>(HttpStatusCode.NotFound , "Doctor not found" , null);
+        ? new ApiResponse<DoctorDto>(HttpStatusCode.OK , "Doctor found" , new DoctorDto
+        {
+            Fullname = res.Fullname,
+            Specialty = res.Specialty,
+            IsActive = res.IsActive,
+            Hiredat = res.Hiredat
+        })
+        : new ApiResponse<DoctorDto>(HttpStatusCode.NotFound , "Doctor not found" , null);
     }
 
-    public async Task<ApiResponse<bool>> UpdateDoctor(Doctor doctor , int id)
+    public async Task<ApiResponse<bool>> UpdateDoctor(DoctorDto doctor , int id)
     {
-        var res = await _repository.UpdateDoctor(doctor , id);
+        var model = new Doctor
+        {
+            Fullname = doctor.Fullname,
+            Specialty = doctor.Specialty,
+            IsActive = doctor.IsActive,
+            Hiredat = doctor.Hiredat
+        };
+        var res = await _repository.UpdateDoctor(model , id);
         return res
         ? new ApiResponse<bool>(HttpStatusCode.OK , "Updated!" , true)
         : new ApiResponse<bool>(HttpStatusCode.InternalServerError , "Not updated(" , false);
